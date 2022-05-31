@@ -1,19 +1,31 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  MyApp({Key? key}) : super(key: key);
+
+  var a = 1;
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
         home: Scaffold(
-            appBar: AppBar(),
-            body: Row(
-              children: [Container()],
-            )));
+      floatingActionButton: FloatingActionButton(
+        child: Text('버튼'),
+        onPressed: () {
+          print(a);
+          a++;
+        },
+      ),
+      appBar: AppBar(),
+      body: ListView.builder(
+          itemCount: 100,
+          itemBuilder: (c, i) {
+            return Text(i.toString());
+          }),
+    ));
   }
 }
