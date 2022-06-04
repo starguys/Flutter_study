@@ -28,7 +28,7 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  var name = [];
+  List<Contact> name = [];
 
   addName(a) {
     setState(() {
@@ -52,7 +52,7 @@ class _MyAppState extends State<MyApp> {
       body: ListView.builder(
           itemCount: name.length,
           itemBuilder: (c, i) {
-            return ListTile(title: Text(name[i].familyName));
+            return ListTile(title: Text(name[i].familyName ?? '이름없음'));
           }),
       floatingActionButton: FloatingActionButton(
         child: Text('OK'),
