@@ -1,0 +1,4 @@
+#Sat Jul 16 02:20:51 KST 2022
+base.0=/Users/gimgangmin/Documents/study/learn-flutter/hello_flutter/build/app/intermediates/dex/debug/mergeDexDebug/classes.dex
+renamed.0=classes.dex
+path.0=classes.dex
