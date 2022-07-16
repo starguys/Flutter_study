@@ -31,7 +31,7 @@ class MyApp extends StatelessWidget {
                 TextField(
                   obscureText: true,
                   decoration: InputDecoration(
-                    labelText: '비밀번호!',
+                    labelText: '비밀번호',
                   ),
                 ),
                 Container(
