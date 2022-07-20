@@ -1,10 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "/Users/gimgangmin/Documents/study/learn-flutter/hello_flutter/build/app/intermediates/incremental/mergeDebugResources/merged.dir/values-pt-rBR/values-pt-rBR.xml",
+            "outputFile": "/Users/arumdree/Documents/study/Flutter_study/hello_flutter/build/app/intermediates/incremental/mergeDebugResources/merged.dir/values-pt-rBR/values-pt-rBR.xml",
             "map": [
                 {
-                    "source": "/Users/gimgangmin/.gradle/caches/transforms-3/acbce933e4b464a5224ed377a62db1f5/transformed/core-1.6.0/res/values-pt-rBR/values-pt-rBR.xml",
+                    "source": "/Users/arumdree/.gradle/caches/transforms-3/acbce933e4b464a5224ed377a62db1f5/transformed/core-1.6.0/res/values-pt-rBR/values-pt-rBR.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",
