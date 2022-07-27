@@ -1,115 +1,268 @@
+import 'package:bucket_list_with_firebase/auth_service.dart';
+import 'package:bucket_list_with_firebase/bucket_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized(); // main 함수에서 async 사용하기 위함
+  await Firebase.initializeApp(); // firebase 앱 시작
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => AuthService()),
+        ChangeNotifierProvider(create: (context) => BucketService()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    final user = context.read<AuthService>().currentUser();
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        primarySwatch: Colors.blue,
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      debugShowCheckedModeBanner: false,
+      home: user == null ? LoginPage() : HomePage(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+/// 로그인 페이지
+class LoginPage extends StatefulWidget {
+  const LoginPage({Key? key}) : super(key: key);
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<LoginPage> createState() => _LoginPageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
+class _LoginPageState extends State<LoginPage> {
+  TextEditingController emailController = TextEditingController();
+  TextEditingController passwordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
+    return Consumer<AuthService>(
+      builder: (context, authService, child) {
+        final user = authService.currentUser();
+        return Scaffold(
+          appBar: AppBar(title: Text("로그인")),
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                /// 현재 유저 로그인 상태
+                Center(
+                  child: Text(
+                    user == null ? "로그인해 주세요 🙂" : "${user.email}님 안녕하세요 👋",
+                    style: TextStyle(
+                      fontSize: 24,
+                    ),
+                  ),
+                ),
+                SizedBox(height: 32),
+
+                /// 이메일
+                TextField(
+                  controller: emailController,
+                  decoration: InputDecoration(hintText: "이메일"),
+                ),
+
+                /// 비밀번호
+                TextField(
+                  controller: passwordController,
+                  obscureText: true, // 비밀번호 안보이게
+                  decoration: InputDecoration(hintText: "비밀번호"),
+                ),
+                SizedBox(height: 32),
+
+                /// 로그인 버튼
+                ElevatedButton(
+                  child: Text("로그인", style: TextStyle(fontSize: 21)),
+                  onPressed: () {
+                    // 로그인
+                    authService.signIn(
+                      email: emailController.text,
+                      password: passwordController.text,
+                      onSuccess: () {
+                        // 로그인 성공
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text("로그인 성공"),
+                        ));
+
+                        // HomePage로 이동
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (context) => HomePage()),
+                        );
+                      },
+                      onError: (err) {
+                        // 에러 발생
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text(err),
+                        ));
+                      },
+                    );
+                  },
+                ),
+
+                /// 회원가입 버튼
+                ElevatedButton(
+                  child: Text("회원가입", style: TextStyle(fontSize: 21)),
+                  onPressed: () {
+                    // 회원가입
+                    authService.signUp(
+                      email: emailController.text,
+                      password: passwordController.text,
+                      onSuccess: () {
+                        // 회원가입 성공
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text('회원가입 성공'),
+                        ));
+                      },
+                      onError: (err) {
+                        // 에러 발생
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text(err),
+                        ));
+                      },
+                    );
+                  },
+                ),
+              ],
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// 홈페이지
+class HomePage extends StatefulWidget {
+  const HomePage({Key? key}) : super(key: key);
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  TextEditingController jobController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    final authService = context.read<AuthService>();
+    final user = authService.currentUser()!;
+    return Consumer<BucketService>(
+      builder: (context, bucketService, child) {
+        return Scaffold(
+          appBar: AppBar(
+            title: Text("버킷 리스트"),
+            actions: [
+              TextButton(
+                child: Text(
+                  "로그아웃",
+                  style: TextStyle(
+                    color: Colors.white,
+                  ),
+                ),
+                onPressed: () {
+                  // 로그아웃
+                  context.read<AuthService>().signOut();
+                  // 로그인 페이지로 이동
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginPage()),
+                  );
+                },
+              ),
+            ],
+          ),
+          body: Column(
+            children: [
+              /// 입력창
+              Padding(
+                padding: const EdgeInsets.all(8),
+                child: Row(
+                  children: [
+                    /// 텍스트 입력창
+                    Expanded(
+                      child: TextField(
+                        controller: jobController,
+                        decoration: InputDecoration(
+                          hintText: "하고 싶은 일을 입력해주세요.",
+                        ),
+                      ),
+                    ),
+
+                    /// 추가 버튼
+                    ElevatedButton(
+                      child: Icon(Icons.add),
+                      onPressed: () {
+                        // create bucket
+                        if (jobController.text.isNotEmpty) {
+                          bucketService.create(jobController.text, user.uid);
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              Divider(height: 1),
+
+              /// 버킷 리스트
+              Expanded(
+                child: FutureBuilder<QuerySnapshot>(
+                    future: bucketService.read(user.uid),
+                    builder: (context, snapshot) {
+                      final docs = snapshot.data?.docs ?? []; // 문서들 가져오기
+                      if (docs.isEmpty) {
+                        return Center(child: Text("버킷 리스트를 작성해주세요."));
+                      }
+                      return ListView.builder(
+                        itemCount: docs.length,
+                        itemBuilder: (context, index) {
+                          final doc = docs[index];
+                          String job = doc.get('job');
+                          bool isDone = doc.get('isDone');
+                          return ListTile(
+                            title: Text(
+                              job,
+                              style: TextStyle(
+                                fontSize: 24,
+                                color: isDone ? Colors.grey : Colors.black,
+                                decoration: isDone
+                                    ? TextDecoration.lineThrough
+                                    : TextDecoration.none,
+                              ),
+                            ),
+                            // 삭제 아이콘 버튼
+                            trailing: IconButton(
+                              icon: Icon(CupertinoIcons.delete),
+                              onPressed: () {
+                                // 삭제 버튼 클릭시
+                                bucketService.delete(doc.id);
+                              },
+                            ),
+                            onTap: () {
+                              // 아이템 클릭하여 isDone 업데이트
+                              bucketService.update(doc.id, !isDone);
+                            },
+                          );
+                        },
+                      );
+                    }),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
